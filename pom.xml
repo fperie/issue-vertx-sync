@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>issue-vertx-sync</groupId>
+	<artifactId>issue-vertx-sync</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+
+		<!-- junit + assertj -->
+		<junit.platform.version>1.3.1</junit.platform.version>
+		<junit.jupiter.version>5.3.1</junit.jupiter.version>
+		<assertj.version>3.11.1</assertj.version>
+
+		<!-- vertx -->
+		<vertx.version>3.6.0-SNAPSHOT</vertx.version>
+		<quasar.version>0.7.10</quasar.version>		
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- VERTX -->
+			<dependency>
+				<groupId>io.vertx</groupId>
+				<artifactId>vertx-dependencies</artifactId>
+				<version>${vertx.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+			  <groupId>co.paralleluniverse</groupId>
+			  <artifactId>quasar-core</artifactId>
+			  <version>${quasar.version}</version>
+			</dependency>
+			
+			<!-- JUNIT 5 + ASSERTJ -->
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-api</artifactId>
+				<version>${junit.jupiter.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-engine</artifactId>
+				<version>${junit.jupiter.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<!-- Only required to run tests in an IDE that bundles an older version -->
+			<dependency>
+				<groupId>org.junit.platform</groupId>
+				<artifactId>junit-platform-launcher</artifactId>
+				<version>${junit.platform.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+			    <groupId>org.assertj</groupId>
+			    <artifactId>assertj-core</artifactId>
+			    <version>${assertj.version}</version>
+			    <scope>test</scope>
+			</dependency>		
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.8.0</version>
+				</plugin>
+
+				<!-- Build a jar file -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>3.1.0</version>
+				</plugin>
+
+				<!-- Unit tests -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>2.22.0</version>
+					<configuration>
+			         	<workingDirectory>${project.build.directory}</workingDirectory>
+			         	<basedir>${project.build.directory}</basedir>
+			         	<argLine>-javaagent:${basedir}/target/quasar-core-${quasar.version}.jar</argLine>
+			    	</configuration>
+				</plugin>
+
+				<!-- vertx-sync with the fibers -->
+				<plugin>
+		            <groupId>com.vlkan</groupId>
+		            <artifactId>quasar-maven-plugin</artifactId>
+		            <version>0.7.9</version>
+		            <configuration>
+		                <check>true</check>
+		                <debug>true</debug>
+		                <verbose>true</verbose>
+		            </configuration>
+		            <executions>
+		                <execution>
+		                    <goals>
+		                        <goal>instrument</goal>
+		                    </goals>
+		                </execution>
+		            </executions>
+		            <dependencies>
+		                <!--
+		                    override the internal dependency to use the same quasar version as the one used by vert.x sync, it
+		                    works until they change the API.
+		                -->
+		                <dependency>
+		                    <groupId>co.paralleluniverse</groupId>
+		                    <artifactId>quasar-core</artifactId>
+		                    <version>${quasar.version}</version>
+		                </dependency>
+		            </dependencies>
+		        </plugin>
+			</plugins>
+		</pluginManagement>
+		
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>co.paralleluniverse</groupId>
+		                    		<artifactId>quasar-core</artifactId>
+		                    		<version>${quasar.version}</version>
+									<outputDirectory>${project.build.directory}</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-sync</artifactId>
+		</dependency>
+		<dependency>
+		  <groupId>co.paralleluniverse</groupId>
+		  <artifactId>quasar-core</artifactId>
+		  <scope>provided</scope>
+		</dependency>
+		
+		<!-- JUNIT 5 -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+		    <groupId>io.vertx</groupId>
+		    <artifactId>vertx-junit5</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<!-- Only required to run tests in an IDE that bundles an older version -->
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+		    <groupId>org.assertj</groupId>
+		    <artifactId>assertj-core</artifactId>
+		    <scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>
